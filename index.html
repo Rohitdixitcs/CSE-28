@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ABES Autonomous SGPA & CGPA Calculator for ABES Engineering College, Ghaziabad. Futuristic, responsive and accurate grade calculations." />
+  <meta name="keywords" content="ABES, SGPA, CGPA, Autonomous, Semester 1, Ghaziabad" />
+  <meta name="author" content="Rohit Dixit" />
+  <title>ABES Autonomous SGPA & CGPA Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <header class="site-header">
+    <nav class="navbar container">
+      <div class="brand-wrap">
+        <div class="logo">A</div>
+        <div>
+          <h1>ABES Autonomous SGPA &amp; CGPA Calculator</h1>
+          <p>Developed by Rohit Dixit</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="#calculator" class="nav-link">Calculator</a>
+        <a href="#cgpa" class="nav-link">CGPA</a>
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark or light mode">🌙</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container" id="calculator">
+    <section class="hero glass-card">
+      <h2>ABES Engineering College (Autonomous), Ghaziabad</h2>
+      <p>Modern 3D EdTech dashboard with live SGPA/CGPA intelligence.</p>
+    </section>
+
+    <section class="controls-panel glass-card">
+      <div class="control-group">
+        <label for="branchSelect">Select Branch</label>
+        <select id="branchSelect">
+          <option value="CSE">CSE</option>
+          <option value="IT">IT</option>
+          <option value="ECE">ECE</option>
+          <option value="Mechanical">Mechanical</option>
+          <option value="Civil">Civil</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="semesterSelect">Select Semester</label>
+        <select id="semesterSelect">
+          <option value="1">Semester 1</option>
+          <option value="2">Semester 2</option>
+          <option value="3">Semester 3</option>
+          <option value="4">Semester 4</option>
+          <option value="5">Semester 5</option>
+          <option value="6">Semester 6</option>
+          <option value="7">Semester 7</option>
+          <option value="8">Semester 8</option>
+        </select>
+      </div>
+
+      <div class="control-group" id="groupControlWrap">
+        <label for="groupSelect">Semester 1 Group</label>
+        <select id="groupSelect">
+          <option value="groupA">Group A</option>
+          <option value="groupB">Group B</option>
+        </select>
+      </div>
+
+      <div class="control-actions">
+        <button id="resetBtn" class="btn secondary">Reset</button>
+        <button id="saveBtn" class="btn">Save Result</button>
+        <button id="pdfBtn" class="btn">Download PDF</button>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="subjects-section glass-card">
+        <h3>Semester Subjects &amp; Marks</h3>
+        <p id="subjectSummary" class="subject-summary"></p>
+        <div id="subjectsContainer" class="subjects-grid"></div>
+      </div>
+
+      <aside class="result-panel glass-card">
+        <h3>Live SGPA Preview</h3>
+        <p class="result-value" id="sgpaValue">0.00</p>
+        <div class="progress-shell">
+          <div id="sgpaProgress" class="progress-bar"></div>
+        </div>
+        <p id="sgpaClass" class="classification">Pass</p>
+        <p id="creditInfo" class="credit-info">Total Credits: 23</p>
+
+        <div class="grade-legend">
+          <h4>Grade System</h4>
+          <ul>
+            <li>90–100: O (10)</li>
+            <li>80–89: A+ (9)</li>
+            <li>70–79: A (8)</li>
+            <li>60–69: B+ (7)</li>
+            <li>50–59: B (6)</li>
+            <li>40–49: C (5)</li>
+            <li>Below 40: F (0)</li>
+          </ul>
+        </div>
+      </aside>
+    </section>
+
+    <section class="cgpa-section glass-card" id="cgpa">
+      <h3>CGPA Calculator</h3>
+      <p>Add semester SGPAs to calculate cumulative CGPA and division.</p>
+      <div class="cgpa-input-row">
+        <input id="semesterSgpaInput" type="number" min="0" max="10" step="0.01" placeholder="Enter semester SGPA (0-10)" />
+        <button id="addSgpaBtn" class="btn">Add SGPA</button>
+      </div>
+      <ul id="cgpaList" class="cgpa-list"></ul>
+      <div class="cgpa-output">
+        <p>CGPA: <strong id="cgpaValue">0.00</strong></p>
+        <p>Division: <strong id="cgpaDivision">Pass</strong></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© 2026 Rohit Dixit | ABES Autonomous SGPA Calculator</p>
+      <div class="social-links">
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" aria-label="GitHub">🐙</a>
+        <a href="https://www.linkedin.com/in/rohit-dixit-224013366" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">💼</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
