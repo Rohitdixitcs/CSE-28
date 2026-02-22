@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>ROHIT DIXIT CALC</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- AI Math Engine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.0/math.min.js"></script>
+
+<!-- Chart Engine -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+
+body{
+    background:#0a0a12;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    color:#00f7ff;
+}
+
+.app{
+    width:390px;
+    height:750px;
+    background:#111;
+    border-radius:25px;
+    overflow:hidden;
+    animation:glow 3s infinite alternate;
+}
+
+@keyframes glow{
+    from{box-shadow:0 0 20px #ff00c8;}
+    to{box-shadow:0 0 60px #00f7ff;}
+}
+
+.header{
+    text-align:center;
+    padding:15px;
+    background:#000;
+    color:#ff00c8;
+    font-weight:bold;
+    letter-spacing:2px;
+}
+
+.login{
+    padding:20px;
+}
+
+.login input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    background:#222;
+    color:#00f7ff;
+}
+
+.login button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:#ff00c8;
+    color:white;
+}
+
+.calc{display:none;padding:15px}
+
+.display{
+    width:100%;
+    height:70px;
+    border:none;
+    border-radius:15px;
+    padding:10px;
+    font-size:22px;
+    background:#000;
+    color:#00f7ff;
+    text-align:right;
+    margin-bottom:10px;
+}
+
+.buttons{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:6px;
+}
+
+button{
+    padding:10px;
+    border:none;
+    border-radius:12px;
+    background:#222;
+    color:#00f7ff;
+    box-shadow:0 4px #000;
+}
+
+button:hover{background:#00f7ff;color:black}
+button:active{transform:translateY(4px);box-shadow:0 1px #000}
+
+.history{
+    margin-top:8px;
+    max-height:80px;
+    overflow-y:auto;
+    background:#000;
+    padding:6px;
+    border-radius:10px;
+    font-size:12px;
+}
+
+canvas{
+    margin-top:8px;
+    background:#000;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<div class="header">ROHIT DIXIT CALC</div>    
+
+<div class="login" id="login">
+<input type="text" id="username" placeholder="Enter Username">
+<button onclick="login()">Login</button>
+</div>
+
+<div class="calc" id="calc">
+
+<input type="text" id="screen" class="display" readonly>
+
+<div class="buttons">
+<button onclick="clearScreen()">C</button>
+<button onclick="del()">DEL</button>
+<button onclick="append('%')">%</button>
+<button onclick="append('(')">(</button>
+<button onclick="append(')')">)</button>
+
+<button onclick="append('7')">7</button>
+<button onclick="append('8')">8</button>
+<button onclick="append('9')">9</button>
+<button onclick="append('/')">/</button>
+<button onclick="append('sqrt(')">√</button>
+
+<button onclick="append('4')">4</button>
+<button onclick="append('5')">5</button>
+<button onclick="append('6')">6</button>
+<button onclick="append('*')">*</button>
+<button onclick="append('^')">^</button>
+
+<button onclick="append('1')">1</button>
+<button onclick="append('2')">2</button>
+<button onclick="append('3')">3</button>
+<button onclick="append('-')">-</button>
+<button onclick="append('sin(')">sin</button>
+
+<button onclick="append('0')">0</button>
+<button onclick="append('.')">.</button>
+<button onclick="calculate()">=</button>
+<button onclick="append('+')">+</button>
+<button onclick="append('cos(')">cos</button>
+
+<button onclick="derivative()">d/dx</button>
+<button onclick="integrate()">∫dx</button>
+<button onclick="plotGraph()">GRAPH</button>
+</div>
+
+<div class="history" id="history"></div>
+<canvas id="graph" width="350" height="180"></canvas>
+
+</div>
+</div>
+
+<script>
+let currentUser="";
+let screen=document.getElementById("screen");
+let historyBox=document.getElementById("history");
+let chart;
+
+/* LOGIN */
+function login(){
+    let user=document.getElementById("username").value;
+    if(user==="") return alert("Enter username");
+    currentUser=user;
+    document.getElementById("login").style.display="none";
+    document.getElementById("calc").style.display="block";
+    loadHistory();
+}
+
+/* BASIC */
+function append(v){screen.value+=v}
+function clearScreen(){screen.value=""}
+function del(){screen.value=screen.value.slice(0,-1)}
+
+/* AI SOLVER */
+function calculate(){
+    try{
+        let exp=screen.value;
+        let result=math.evaluate(exp);
+        screen.value=result;
+        saveHistory(exp+" = "+result);
+    }catch{screen.value="Error"}
+}
+
+/* DERIVATIVE */
+function derivative(){
+    try{
+        let exp=prompt("Enter expression in x:");
+        let d=math.derivative(exp,'x').toString();
+        alert("Derivative: "+d);
+    }catch{alert("Invalid expression")}
+}
+
+/* INTEGRAL (Numerical Approximation) */
+function integrate(){
+    let exp=prompt("Enter expression in x:");
+    let a=parseFloat(prompt("Lower limit:"));
+    let b=parseFloat(prompt("Upper limit:"));
+    let sum=0;
+    let step=0.01;
+    for(let x=a;x<b;x+=step){
+        sum+=math.evaluate(exp,{x:x})*step;
+    }
+    alert("Approx Integral = "+sum.toFixed(4));
+}
+
+/* GRAPH */
+function plotGraph(){
+    let eq=prompt("Enter equation in x (x^2, sin(x), etc)");
+    if(!eq) return;
+
+    let xVals=[],yVals=[];
+    for(let x=-10;x<=10;x+=0.5){
+        xVals.push(x);
+        try{yVals.push(math.evaluate(eq,{x:x}))}
+        catch{yVals.push(null)}
+    }
+
+    if(chart) chart.destroy();
+
+    chart=new Chart(document.getElementById("graph"),{
+        type:"line",
+        data:{
+            labels:xVals,
+            datasets:[{
+                label:"y = "+eq,
+                data:yVals,
+                borderColor:"#00f7ff",
+                tension:0.3
+            }]
+        },
+        options:{
+            scales:{
+                x:{ticks:{color:"#00f7ff"}},
+                y:{ticks:{color:"#00f7ff"}}
+            },
+            plugins:{
+                legend:{labels:{color:"#ff00c8"}}
+            }
+        }
+    });
+}
+
+/* HISTORY */
+function saveHistory(entry){
+    let key="history_"+currentUser;
+    let old=localStorage.getItem(key)||"";
+    old+=entry+"<br>";
+    localStorage.setItem(key,old);
+    historyBox.innerHTML=old;
+}
+function loadHistory(){
+    let key="history_"+currentUser;
+    historyBox.innerHTML=localStorage.getItem(key)||"";
+}
+
+/* KEYBOARD */
+document.addEventListener("keydown",function(e){
+    if(!isNaN(e.key) || "+-*/.%()^".includes(e.key)){
+        screen.value+=e.key;
+    }
+    else if(e.key==="Enter"){calculate()}
+    else if(e.key==="Backspace"){del()}
+});
+</script>
+
+</body>
+</html>
