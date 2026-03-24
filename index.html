@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RDX Tools</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-soft: #111a2f;
+      --surface: rgba(255,255,255,0.08);
+      --surface-strong: rgba(255,255,255,0.12);
+      --line: rgba(255,255,255,.1);
+      --text: #e6edf8;
+      --muted: #9fb0ca;
+      --accent: #0A84FF;
+      --shadow: 0 18px 40px rgba(2,6,23,.42);
+      --radius: 24px;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --ease: cubic-bezier(.22,.61,.36,1);
+    }
+    body.light {
+      --bg: #edf2fb;
+      --bg-soft: #f7f9ff;
+      --surface: rgba(255,255,255,.7);
+      --surface-strong: rgba(255,255,255,.84);
+      --line: rgba(255,255,255,.65);
+      --text: #1f2937;
+      --muted: #64748b;
+      --shadow: 0 10px 28px rgba(15,23,42,.16);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%}
+    body{
+      font-family: -apple-system,BlinkMacSystemFont,\"San Francisco\",\"Segoe UI\",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 8% -4%, rgba(91,124,250,.25), transparent 35%),
+        radial-gradient(circle at 90% 0%, rgba(19,201,215,.22), transparent 28%),
+        var(--bg);
+      transition: background .45s var(--ease),color .3s var(--ease);
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before, body::after{
+      content:"";
+      position: fixed;
+      width: 44vmax;
+      height: 44vmax;
+      border-radius: 50%;
+      filter: blur(60px);
+      z-index: -1;
+      opacity: .22;
+      pointer-events: none;
+      will-change: transform;
+      animation: floatBlob 16s var(--ease) infinite alternate;
+    }
+    body::before{
+      background: #5b7cfa;
+      left: -10vmax;
+      top: -16vmax;
+    }
+    body::after{
+      background: #13c9d7;
+      right: -10vmax;
+      top: -8vmax;
+      animation-delay: -4s;
+    }
+    .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .side{
+      position:sticky;top:0;height:100vh;padding:20px 16px;display:flex;flex-direction:column;gap:10px;
+      background:var(--surface);backdrop-filter:blur(12px);border-right:1px solid var(--line)
+    }
+    .brand{margin:0;font-size:1rem;line-height:1.4;font-weight:700}
+    .chip{width:fit-content;padding:6px 11px;border-radius:999px;background:linear-gradient(135deg,#0A84FF,#4da3ff);color:#fff;font-size:.73rem;letter-spacing:.2px}
+    .small{font-size:.82rem;color:var(--muted)}
+
+    .btn,.nav-btn{
+      border:1px solid var(--line);background:var(--surface-strong);color:var(--text);
+      padding:10px 14px;border-radius:999px;cursor:pointer;position:relative;overflow:hidden;
+      transition:transform .22s var(--ease), border-color .22s var(--ease), background .22s var(--ease);
+      box-shadow: 0 8px 18px rgba(10,132,255,.12);
+    }
+    .btn:hover,.nav-btn:hover{transform:translateY(-1px) scale(1.02);box-shadow:0 10px 22px rgba(10,132,255,.2)}
+    .btn:active,.nav-btn:active{transform:scale(.98)}
+    .primary{background:linear-gradient(135deg,#0A84FF,#52a7ff);border:none;color:#fff}
+    .listening{background:#ef4444;color:#fff;border-color:transparent}
+    .install-pop{animation:installPop .35s var(--ease)}
+
+    .ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.45);animation:ripple .6s linear;pointer-events:none}
+
+    main{padding:20px clamp(12px,2.5vw,30px) 92px}
+    .topbar{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;animation:enter .45s var(--ease)}
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .input,select,textarea{
+      width:100%;padding:12px 14px;border-radius:16px;border:1px solid var(--line);outline:none;
+      color:var(--text);background:var(--surface-strong)
+    }
+    .input:focus,select:focus,textarea:focus{border-color:#5b7cfa;box-shadow:0 0 0 3px rgba(91,124,250,.22)}
+
+    .section-title{margin:22px 0 10px;color:var(--muted);font-size:1rem;font-weight:650;letter-spacing:.2px}
+    .tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;animation:enter .45s var(--ease)}
+    .tool-card{
+      grid-column:auto;padding:18px 14px;min-height:132px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;
+      border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);backdrop-filter:blur(12px);box-shadow:var(--shadow);cursor:pointer;
+      transition:transform .24s var(--ease),box-shadow .24s var(--ease),border-color .24s var(--ease);
+    }
+    .tool-card:hover{transform:translateY(-6px) scale(1.02);border-color:rgba(10,132,255,.65);box-shadow:0 22px 44px rgba(10,132,255,.22)}
+    .tool-card .icon{font-size:1.8rem}
+    .tool-card .name{font-weight:700;text-align:center}
+
+    .glass{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;backdrop-filter:blur(20px)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:.86rem}
+    .pill{padding:6px 10px;border-radius:999px;background:var(--surface-strong);border:1px solid var(--line);font-size:.84rem}
+
+    .tool-view{position:fixed;inset:0;z-index:50;background:linear-gradient(180deg,rgba(7,11,21,.8),rgba(7,11,21,.94));display:none;opacity:0;transition:opacity .26s var(--ease);padding:10px}
+    .tool-view.open{display:block;opacity:1}
+    .tool-shell{max-width:980px;height:calc(100vh - 20px);margin:0 auto;background:color-mix(in srgb, var(--bg-soft) 86%, transparent);border:1px solid var(--line);border-radius:28px;overflow:auto;transform:translateY(8px) scale(.95);animation:toolOpen .32s var(--ease) forwards;padding:18px}
+    .tool-head{position:sticky;top:0;background:var(--bg-soft);padding-bottom:8px;z-index:2}
+    .tool-head h2{display:flex;align-items:center;gap:10px}
+    .tool-content{max-width:800px;margin:0 auto;display:grid;gap:14px}
+    .tool-panel{padding:22px}
+
+    .calc-display{background:var(--surface-strong);border-radius:12px;padding:12px;min-height:52px;font-size:1.4rem;word-break:break-word}
+    .calc-keys{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:8px}
+    .todo-item{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;background:var(--surface-strong);border:1px solid var(--line);border-radius:10px;padding:8px}
+    .todo-item.done span{text-decoration:line-through;opacity:.75}
+    .strength{height:8px;border-radius:999px;background:rgba(148,163,184,.25);overflow:hidden;margin-top:8px}
+    .strength>div{height:100%;width:0;transition:width .2s ease}
+
+    .skeleton{height:16px;border-radius:9px;background:linear-gradient(100deg,rgba(148,163,184,.2) 30%, rgba(148,163,184,.35) 50%, rgba(148,163,184,.2) 70%);background-size:220% 100%;animation:shimmer 1.2s infinite}
+
+    .bottom-nav{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:35;padding:8px;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;backdrop-filter:blur(20px)}
+    .bottom-nav button{flex:1}
+    .footer{margin-top:18px;text-align:center;color:var(--muted);font-size:.9rem}
+    .offline-banner{
+      display:none;
+      margin-bottom:12px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: rgba(245,158,11,.2);
+      border:1px solid rgba(245,158,11,.45);
+      color:#ffd89b;
+      font-weight:600;
+    }
+    .icon-svg{width:28px;height:28px;display:block}
+
+    @media (max-width:1150px){.tool-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    @media (max-width:880px){
+      .app{grid-template-columns:1fr}
+      .side{display:none}
+      .topbar{grid-template-columns:1fr}
+      .tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .bottom-nav{display:flex}
+    }
+    @media (max-width:560px){.tool-grid{grid-template-columns:1fr}.tool-shell{height:calc(100vh - 12px)}}
+
+    @keyframes enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes slideIn{to{transform:none}}
+    @keyframes toolOpen{to{transform:translateY(0) scale(1);opacity:1}}
+    @keyframes shimmer{to{background-position:-220% 0}}
+    @keyframes ripple{to{transform:scale(4);opacity:0}}
+    @keyframes floatBlob{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,28px,0)}}
+    @keyframes installPop{0%{transform:scale(1)}40%{transform:scale(.96)}100%{transform:scale(1)}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="side">
+      <span class="chip">Daily Productivity Suite</span>
+      <h1 class="brand">RDX Tools</h1>
+      <button class="nav-btn" data-jump="dash">Dashboard</button>
+      <button class="nav-btn" data-jump="favoritesPanel">Favorites</button>
+      <button class="nav-btn" data-jump="activityPanel">Activity</button>
+      <div class="small">Clean flow: dashboard cards → full tool view → back.</div>
+      <a href="https://www.linkedin.com/in/rohit-dixit-224013366" target="_blank" rel="noopener noreferrer" class="glass" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:10px;margin-top:6px;">
+        <img src="https://unavatar.io/linkedin/rohit-dixit-224013366" alt="Rohit Dixit LinkedIn photo" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid var(--line);"/>
+        <div>
+          <div style="font-weight:700;line-height:1.2;">Rohit Dixit</div>
+          <div class="muted" style="font-size:.78rem;">View LinkedIn</div>
+        </div>
+      </a>
+    </aside>
+
+    <main>
+      <div id="offlineBanner" class="offline-banner">You are offline – some tools may not work.</div>
+      <div class="topbar" id="dash">
+        <input id="smartSearch" class="input" placeholder="Smart Search: 2+2 | 100 usd to inr | hello in hindi"/>
+        <div class="toolbar">
+          <button id="installBtn" class="btn" style="display:none">Install App</button>
+          <button id="voiceBtn" class="btn">Voice</button>
+          <button id="themeBtn" class="btn">Theme</button>
+        </div>
+      </div>
+
+      <section>
+        <h2 class="section-title">All Tools</h2>
+        <div id="toolGrid" class="tool-grid"></div>
+
+        <h2 class="section-title" id="favoritesPanel">Favorites</h2>
+        <div class="glass"><div id="favoritesTags" class="row"></div></div>
+
+        <h2 class="section-title" id="activityPanel">Recent Activity</h2>
+        <div class="glass">
+          <div class="row" style="justify-content:space-between">
+            <strong>Activity Log</strong>
+            <button id="clearActivity" class="btn">Clear Activity</button>
+          </div>
+          <div id="activityList" class="muted" style="margin-top:8px"></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <strong style="font-weight:800;border-bottom:2px solid rgba(10,132,255,.7);padding-bottom:2px;">Made by Rohit Dixit</strong> ·
+        <a href="https://www.linkedin.com/in/rohit-dixit-224013366" target="_blank" rel="noopener noreferrer" style="color:#7ec1ff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(126,193,255,.7);">LinkedIn Profile</a>
+      </footer>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <button class="btn" data-jump="dash">Home</button>
+    <button class="btn" data-jump="favoritesPanel">Fav</button>
+    <button class="btn" data-jump="activityPanel">Log</button>
+  </nav>
+
+  <section id="toolView" class="tool-view">
+    <div class="tool-shell">
+      <div class="tool-head row">
+        <button id="backBtn" class="btn">← Back to Dashboard</button>
+        <h2 id="toolTitle" style="margin:0"></h2>
+      </div>
+      <div id="toolBody"></div>
+    </div>
+  </section>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const store = { get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d;}catch{return d;}}, set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)) };
+  const debounce = (fn,w=250)=>{let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),w);} };
+
+  // Theme
+  if (store.get('theme','dark') === 'light') document.body.classList.add('light');
+  $('themeBtn').onclick = () => {
+    document.body.classList.toggle('light');
+    store.set('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+  };
+
+  // Ripple effect
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('button');
+    if (!target) return;
+    const r = document.createElement('span');
+    const rect = target.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    r.className = 'ripple';
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size/2) + 'px';
+    r.style.top = (e.clientY - rect.top - size/2) + 'px';
+    target.appendChild(r);
+    setTimeout(()=>r.remove(), 620);
+  });
+
+  // State
+  let activity = store.get('activity', []);
+  let favorites = new Set(store.get('favorites', []));
+  let todos = store.get('todos', []);
+  let calcHistory = store.get('calcHistory', []);
+  let rates = null;
+
+  const ICONS = {
+    calculator:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><rect x=\"4\" y=\"2.5\" width=\"16\" height=\"19\" rx=\"3\"/><path d=\"M8 7h8M8 11h2m4 0h2M8 15h2m4 0h2M8 19h8\"/></svg>`,
+    currency:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 7h13a4 4 0 0 1 0 8H6\"/><path d=\"m3 11 3-3-3-3\"/><path d=\"m21 13-3 3 3 3\"/></svg>`,
+    translator:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M4 5h8v8H4z\"/><path d=\"M12 19h8V7h-8\"/><path d=\"M6 9h4M8 7v4M14 11h4M15 17l2-6 2 6\"/></svg>`,
+    unit:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 6h18M3 12h18M3 18h18\"/><path d=\"M7 6v12M13 6v12M19 6v12\"/></svg>`,
+    password:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V8a4 4 0 1 1 8 0v3\"/></svg>`,
+    qr:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z\"/><path d=\"M14 14h2v2h-2zM18 14h2v6h-6v-2\"/></svg>`,
+    weather:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M17 18H7a4 4 0 1 1 .6-7.95A5 5 0 0 1 18 11a3.5 3.5 0 0 1-1 7\"/><path d=\"M8 4v2M12 3v2M16 4v2\"/></svg>`,
+    todo:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"m8 11 2 2 4-4M8 17h8\"/></svg>`,
+    gst:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M8 8h8M8 12h8M8 16h5\"/></svg>`,
+    emi:`<svg class=\"icon-svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\"><path d=\"M3 10 12 3l9 7v10H3z\"/><path d=\"M9 21v-6h6v6\"/></svg>`
+  };
+  const tools = [
+    { id:'calculator', icon:'calculator', name:'Calculator' },
+    { id:'currency', icon:'currency', name:'Currency Converter' },
+    { id:'translator', icon:'translator', name:'Translator' },
+    { id:'unit', icon:'unit', name:'Unit Converter' },
+    { id:'password', icon:'password', name:'Password Generator' },
+    { id:'qr', icon:'qr', name:'QR Generator' },
+    { id:'weather', icon:'weather', name:'Weather' },
+    { id:'todo', icon:'todo', name:'To-Do List' },
+    { id:'gst', icon:'gst', name:'GST Calculator' },
+    { id:'emi', icon:'emi', name:'EMI Calculator' }
+  ];
+
+  const addActivity = (text) => {
+    activity.unshift(`${new Date().toLocaleString()} • ${text}`);
+    activity = activity.slice(0, 35);
+    store.set('activity', activity);
+    renderActivity();
+  };
+  const activityIcon = (text) => {
+    const t = text.toLowerCase();
+    if (t.includes('opened')) return '◉';
+    if (t.includes('translated')) return '◎';
+    if (t.includes('weather')) return '◌';
+    if (t.includes('calculated')) return '◆';
+    return '•';
+  };
+  const renderActivity = () => $('activityList').innerHTML = activity.map(a=>`<div style="padding:8px 0;border-bottom:1px dashed var(--line);display:flex;gap:8px;align-items:center;"><span style="color:#7ec1ff;font-weight:700">${activityIcon(a)}</span><span>${a}</span></div>`).join('') || '<div class=\"muted\">No activity yet.</div>';
+  const renderFavorites = () => {
+    const arr=[...favorites];
+    $('favoritesTags').innerHTML = arr.length ? arr.map(a=>`<span class="pill">${a}</span>`).join('') : '<span class="muted">No favorites yet.</span>';
+    store.set('favorites', arr);
+    document.querySelectorAll('.star').forEach(b => b.textContent = favorites.has(b.dataset.id) ? '★' : '☆');
+  };
+
+  $('clearActivity').onclick = () => {
+    activity = [];
+    store.set('activity', activity);
+    renderActivity();
+  };
+
+  // Dashboard cards + reorder
+  const grid = $('toolGrid');
+  const savedOrder = store.get('layoutOrder', tools.map(t=>t.id));
+  const ordered = savedOrder.map(id => tools.find(t=>t.id===id)).filter(Boolean);
+  tools.forEach(t => !ordered.some(o=>o.id===t.id) && ordered.push(t));
+
+  const card = (t) => `<article class="tool-card" draggable="true" data-id="${t.id}"><button class="btn star" data-id="${t.id}" style="position:absolute;top:10px;right:10px;padding:4px 9px;font-size:.82rem">${favorites.has(t.id)?'★':'☆'}</button><span class="icon">${ICONS[t.icon] || ''}</span><div class="name">${t.name}</div><div class="muted">Tap to open</div></article>`;
+  grid.innerHTML = ordered.map(card).join('');
+
+  let dragEl = null;
+  [...grid.children].forEach(el => {
+    el.addEventListener('dragstart', ()=>dragEl=el);
+    el.addEventListener('dragover', e=>e.preventDefault());
+    el.addEventListener('drop', ()=>{
+      if (!dragEl || dragEl===el) return;
+      const kids=[...grid.children], a=kids.indexOf(dragEl), b=kids.indexOf(el);
+      if (a<b) grid.insertBefore(dragEl, el.nextSibling); else grid.insertBefore(dragEl, el);
+      store.set('layoutOrder', [...grid.children].map(n=>n.dataset.id));
+      addActivity('Reordered tool cards');
+    });
+  });
+
+  grid.onclick = (e) => {
+    const star = e.target.closest('.star');
+    if (star) {
+      const id = star.dataset.id;
+      favorites.has(id) ? favorites.delete(id) : favorites.add(id);
+      renderFavorites();
+      addActivity(`Toggled favorite: ${id}`);
+      return;
+    }
+    const c = e.target.closest('.tool-card');
+    if (c) openTool(c.dataset.id);
+  };
+
+  // Tool view
+  const view=$('toolView'), body=$('toolBody'), title=$('toolTitle');
+  let activeCleanup = null;
+  $('backBtn').onclick = ()=>{
+    view.classList.remove('open');
+    body.innerHTML='';
+    if (typeof activeCleanup === 'function') activeCleanup();
+    activeCleanup = null;
+  };
+
+  const openTool = (id) => {
+    const t = tools.find(x=>x.id===id);
+    if (!t) return;
+    title.innerHTML = `${ICONS[t.icon] || ''} <span>${t.name}</span>`;
+    body.innerHTML = templates[id]();
+    if (typeof activeCleanup === 'function') activeCleanup();
+    activeCleanup = binders[id]() || null;
+    view.classList.add('open');
+    addActivity(`Opened ${t.name}`);
+  };
+
+  const templates = {
+    calculator: () => `<div class="tool-content"><div class="glass tool-panel"><div id="calcDisplay" class="calc-display">0</div><div class="muted" style="margin-top:6px">Scientific: sin, cos, tan, log, ln, π, e, x², x³, √</div><div id="calcKeys" class="calc-keys"></div><div class="row" style="margin-top:10px"><span class="muted">History</span><button id="clearCalcHistory" class="btn">Clear</button></div><div id="calcHistory" class="muted"></div></div></div>`,
+    currency: () => `<div class="tool-content"><div class="glass tool-panel"><div class="row"><input id="curAmount" type="number" value="1"/><select id="curFrom"></select><button id="curSwap" class="btn">⇄</button><select id="curTo"></select></div></div><div class="glass tool-panel"><p id="curOut" class="muted">Loading rates...</p></div></div>`,
+    translator: () => `<div class="tool-content"><div class="glass tool-panel"><div class="row"><select id="trFrom"><option value="auto">Auto Detect Language</option><option value="en" selected>English</option><option value="hi">Hindi</option><option value="ru">Russian</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option></select><button id="trSwap" class="btn">⇄</button><select id="trTo"><option value="hi" selected>Hindi</option><option value="en">English</option><option value="ru">Russian</option><option value="es">Spanish</option><option value="fr">French</option><option value="de">German</option></select></div><textarea id="trIn" rows="3" placeholder="Enter text..."></textarea><div id="trStatus" class="muted" style="margin-top:6px"></div><div id="trLoading" class="muted" style="display:none"><div class="skeleton" style="width:100%;margin-top:8px"></div></div></div><div class="glass tool-panel"><textarea id="trOut" rows="3" readonly placeholder="Translation"></textarea><button id="trCopy" class="btn" style="margin-top:8px">Copy</button></div></div>`,
+    unit: () => `<div class="tool-content"><div class="glass tool-panel"><select id="uType"></select><div class="row"><input id="uVal" type="number" value="1"/><select id="uFrom"></select><select id="uTo"></select></div></div><div class="glass tool-panel"><div id="uOut" class="muted">Enter value to start.</div></div></div>`,
+    password: () => `<div class="tool-content"><div class="glass tool-panel"><div class="row"><input id="pLen" type="number" min="6" max="64" value="14"/></div><label><input id="pUpper" type="checkbox" checked/> Uppercase</label><br/><label><input id="pLower" type="checkbox" checked/> Lowercase</label><br/><label><input id="pNum" type="checkbox" checked/> Numbers</label><br/><label><input id="pSym" type="checkbox" checked/> Symbols</label></div><div class="glass tool-panel"><div class="row"><input id="pOut" readonly/><button id="pGen" class="btn">Generate</button></div><div class="strength"><div id="pBar"></div></div></div></div>`,
+    qr: () => `<div class="tool-content"><div class="glass tool-panel"><input id="qrText" placeholder="Text or URL"/></div><div class="glass tool-panel" style="display:grid;place-items:center;min-height:180px"><img id="qrImg" alt="QR preview"/></div><div class="glass tool-panel"><button id="qrDown" class="btn">Download</button></div></div>`,
+    weather: () => `<div class="tool-content"><div class="glass tool-panel"><div class="row"><input id="wCity" placeholder="City name (e.g., Delhi)"/><button id="wByCity" class="btn">Search</button><button id="wByLoc" class="btn">Use Location</button></div><div id="wLoading" style="display:none"><div class="skeleton" style="width:120px;margin-top:8px"></div><div class="skeleton" style="width:180px;margin-top:6px"></div><div class="skeleton" style="width:100px;margin-top:6px"></div></div></div><div class="glass tool-panel"><div id="wOut" class="row muted"><span class="pill">Temp: -</span><span class="pill">Condition: -</span><span class="pill">Humidity: -</span></div></div></div>`,
+    todo: () => `<div class="tool-content"><div class="glass tool-panel"><div class="row"><input id="todoInput" placeholder="Add task"/><button id="todoAdd" class="btn">Add</button></div></div><div class="glass tool-panel"><div id="todoList"></div></div></div>`,
+    gst: () => `<div class="tool-content"><div class="glass tool-panel"><strong>Input</strong><div class="row" style="margin-top:8px"><input id="gstAmount" type="number" placeholder="Amount"/><input id="gstRate" type="number" value="18" placeholder="GST %"/></div><div class="row" style="margin-top:8px"><button id="gstAdd" class="btn">Add GST</button><button id="gstRemove" class="btn">Remove GST</button></div></div><div class="glass tool-panel"><strong>Result</strong><div id="gstOut" class="muted" style="margin-top:8px">Enter values to calculate GST breakdown.</div></div></div>`,
+    emi: () => `<div class="tool-content"><div class="glass tool-panel"><strong>Input</strong><div class="row" style="margin-top:8px"><input id="emiLoan" type="number" placeholder="Loan amount"/><input id="emiRate" type="number" placeholder="Annual interest %"/><input id="emiTime" type="number" placeholder="Duration"/><select id="emiUnit"><option value="months">Months</option><option value="years">Years</option></select></div><button id="emiCalc" class="btn" style="margin-top:10px">Calculate EMI</button></div><div class="glass tool-panel"><strong>Result</strong><div id="emiOut" class="muted" style="margin-top:8px">Fill inputs to calculate monthly EMI.</div></div></div>`
+  };
+
+  const binders = {
+    calculator: () => {
+      const display=$('calcDisplay');
+      const keys=['sin(','cos(','tan(','log(','ln(','√','π','e','x²','x³','(',')','%','/','AC','7','8','9','*','⌫','4','5','6','-','₹','1','2','3','+','0','.','='];
+      let expr='';
+      const safe=(s)=>{
+        const parsed = s
+          .replace(/₹/g,'')
+          .replace(/√/g,'Math.sqrt')
+          .replace(/sin\(/g,'Math.sin(')
+          .replace(/cos\(/g,'Math.cos(')
+          .replace(/tan\(/g,'Math.tan(')
+          .replace(/log\(/g,'Math.log10(')
+          .replace(/ln\(/g,'Math.log(')
+          .replace(/π/g,'Math.PI')
+          .replace(/\\be\\b/g,'Math.E')
+          .replace(/x²/g,'**2')
+          .replace(/x³/g,'**3');
+        return Function(`"use strict";return (${parsed})`)();
+      };
+      const renderH=()=>$('calcHistory').innerHTML=calcHistory.map(h=>`<div>${h}</div>`).join('')||'<span class="muted">No history yet.</span>';
+      const press=(k)=>{if(k==='AC'){expr='';display.textContent='0';return;}if(k==='⌫'){expr=expr.slice(0,-1);display.textContent=expr||'0';return;}if(k==='='){try{const r=safe(expr||'0');calcHistory.unshift(`${expr} = ${r}`);calcHistory=calcHistory.slice(0,20);store.set('calcHistory',calcHistory);expr=String(r);display.textContent=expr;renderH();addActivity('Used calculator');}catch{display.textContent='Error';}return;}expr+=k;display.textContent=expr;};
+      $('calcKeys').innerHTML=keys.map(k=>`<button class="btn" data-k="${k}">${k}</button>`).join('');
+      $('calcKeys').onclick=(e)=>{const b=e.target.closest('button');if(b) press(b.dataset.k)};
+      $('clearCalcHistory').onclick=()=>{calcHistory=[];store.set('calcHistory',calcHistory);renderH()};
+      renderH();
+      const key=(e)=>{if(!view.classList.contains('open'))return;if(/^[0-9+\-*/().%]$/.test(e.key))press(e.key);if(e.key==='Enter')press('=');if(e.key==='Backspace')press('⌫');};
+      window.addEventListener('keydown',key);
+      return () => window.removeEventListener('keydown', key);
+    },
+    currency: async () => {
+      const from=$('curFrom'),to=$('curTo');
+      if(!rates){try{const r=await fetch('https://open.er-api.com/v6/latest/INR');const d=await r.json();rates=d.rates;}catch{}}
+      if(!rates){$('curOut').textContent='Currency API unavailable offline.';return;}
+      const opts=Object.keys(rates).sort().map(c=>`<option>${c}</option>`).join('');
+      from.innerHTML=opts;to.innerHTML=opts;from.value='INR';to.value='USD';
+      const run=()=>{const amt=Number($('curAmount').value||0),f=from.value,t=to.value;const inr=f==='INR'?amt:amt/rates[f];const out=t==='INR'?inr:inr*rates[t];$('curOut').textContent=`${amt.toFixed(2)} ${f} = ${out.toFixed(2)} ${t}`;addActivity('Converted currency');};
+      ['curAmount','curFrom','curTo'].forEach(id=>$(id).addEventListener('input',debounce(run,180)));
+      $('curSwap').onclick=()=>{[from.value,to.value]=[to.value,from.value];run()};
+      run();
+    },
+    translator: () => {
+      const hinglishMap = {
+        mera:'मेरा', naam:'नाम', hai:'है', main:'मैं', mai:'मैं', tum:'तुम', aap:'आप', kya:'क्या', kaise:'कैसे',
+        ho:'हो', hun:'हूँ', acha:'अच्छा', accha:'अच्छा', bahut:'बहुत', dhanyavaad:'धन्यवाद', shukriya:'शुक्रिया'
+      };
+      const looksHinglish = (txt) => {
+        const words = txt.toLowerCase().split(/\\s+/);
+        const score = words.filter(w => hinglishMap[w]).length;
+        return score >= 2 && /^[a-z\\s.,!?'-]+$/i.test(txt);
+      };
+      const normalizeInput = (txt, source, target) => {
+        if ((source === 'hi' || source === 'auto') && (target !== 'hi') && looksHinglish(txt)) {
+          return txt.toLowerCase().split(/\\s+/).map(w => hinglishMap[w] || w).join(' ');
+        }
+        return txt;
+      };
+      const run=debounce(async()=>{
+        const q=$('trIn').value.trim();
+        if(!q){$('trOut').value='';$('trLoading').style.display='none';$('trStatus').textContent='';return;}
+        $('trLoading').style.display='block';
+        $('trStatus').textContent='Translating...';
+        const source = $('trFrom').value;
+        const target = $('trTo').value;
+        const normalizedQ = normalizeInput(q, source, target);
+        try{
+          const res=await fetch('https://libretranslate.de/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:normalizedQ,source:source,target:target,format:'text'})});
+          const d=await res.json();
+          if (!d.translatedText) throw new Error('Primary API empty');
+          $('trOut').value=d.translatedText;
+          $('trStatus').textContent='Done';
+          addActivity('Translated text');
+        }catch{
+          try {
+            const detectedSource = source === 'auto'
+              ? (looksHinglish(q) ? 'hi' : (/[\u0400-\u04FF]/.test(q) ? 'ru' : /[\u0900-\u097F]/.test(q) ? 'hi' : 'en'))
+              : source;
+            const langpair = `${detectedSource}|${target}`;
+            const r2 = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(normalizedQ)}&langpair=${langpair}`);
+            const d2 = await r2.json();
+            const txt = d2.responseData?.translatedText || normalizedQ;
+            $('trOut').value = txt;
+            $('trStatus').textContent = 'Done (fallback API)';
+            addActivity('Translated text (fallback)');
+          } catch {
+            $('trOut').value = normalizedQ;
+            $('trStatus').textContent = 'Could not reach translation API. Showing original text.';
+          }
+        }
+        $('trLoading').style.display='none';
+      },340);
+      $('trIn').addEventListener('input',run);
+      $('trSwap').onclick=()=>{[$('trFrom').value,$('trTo').value]=[$('trTo').value,$('trFrom').value];run();};
+      $('trCopy').onclick=()=>navigator.clipboard.writeText($('trOut').value||'');
+    },
+    unit: () => {
+      const units={Length:{m:1,km:1000,cm:.01,ft:.3048,in:.0254},Weight:{kg:1,g:.001,lb:.453592},Speed:{'m/s':1,'km/h':.277778,mph:.44704},Temperature:{'°C':'c','°F':'f',K:'k'}};
+      $('uType').innerHTML=Object.keys(units).map(k=>`<option>${k}</option>`).join('');
+      const refill=()=>{const t=$('uType').value,o=Object.keys(units[t]).map(k=>`<option>${k}</option>`).join('');$('uFrom').innerHTML=o;$('uTo').innerHTML=o;run();};
+      const temp=(v,f,t)=>{const c=f==='°C'?v:f==='°F'?(v-32)*5/9:v-273.15;return t==='°C'?c:t==='°F'?(c*9/5)+32:c+273.15;};
+      const run=()=>{const t=$('uType').value,v=Number($('uVal').value||0),f=$('uFrom').value,to=$('uTo').value;const out=t==='Temperature'?temp(v,f,to):(v*units[t][f])/units[t][to];$('uOut').textContent=`Result: ${out.toFixed(4)} ${to}`;addActivity('Used unit converter');};
+      $('uType').onchange=refill;['uVal','uFrom','uTo'].forEach(id=>$(id).addEventListener('input',debounce(run,140)));refill();
+    },
+    password: () => {
+      const sets={u:'ABCDEFGHIJKLMNOPQRSTUVWXYZ',l:'abcdefghijklmnopqrstuvwxyz',n:'0123456789',s:'!@#₹%^&*()_+-={}[]:;,.?'};
+      const score=(p)=>{let s=0;if(/[A-Z]/.test(p))s++;if(/[a-z]/.test(p))s++;if(/\d/.test(p))s++;if(/[^A-Za-z0-9]/.test(p))s++;if(p.length>12)s++;return s;};
+      $('pGen').onclick=()=>{let chars='';if($('pUpper').checked)chars+=sets.u;if($('pLower').checked)chars+=sets.l;if($('pNum').checked)chars+=sets.n;if($('pSym').checked)chars+=sets.s;if(!chars)return;const len=Number($('pLen').value||14),arr=crypto.getRandomValues(new Uint32Array(len));let out='';arr.forEach(v=>out+=chars[v%chars.length]);$('pOut').value=out;const sc=score(out);$('pBar').style.width=(sc*20)+'%';$('pBar').style.background=sc>=4?'var(--ok)':sc>=3?'var(--warn)':'var(--bad)';addActivity('Generated password');};
+    },
+    qr: () => {
+      const run=debounce(()=>{const q=encodeURIComponent(($('qrText').value||'').trim());if(!q){$('qrImg').removeAttribute('src');return;}$('qrImg').src=`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${q}`;addActivity('Generated QR code');},200);
+      $('qrText').addEventListener('input',run);
+      $('qrDown').onclick=()=>{if(!$('qrImg').src)return;const a=document.createElement('a');a.href=$('qrImg').src;a.download='qr-code.png';a.click();};
+    },
+    weather: () => {
+      const conditionFromCode = (c) => ({0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Cloudy',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',61:'Rain',63:'Rain',65:'Heavy rain',71:'Snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorm'}[c]||'Unknown');
+      const render=(temp,cond,hum)=>$('wOut').innerHTML=`<span class="pill">Temp: ${temp}°C</span><span class="pill">Condition: ${cond}</span><span class="pill">Humidity: ${hum}%</span>`;
+      const run=async(query)=>{
+        $('wLoading').style.display='block';
+        try{
+          let lat,lon;
+          const geo=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+          const gd=await geo.json();
+          if(!gd.results?.length) throw new Error('No city');
+          lat=gd.results[0].latitude; lon=gd.results[0].longitude;
+          const w=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`);
+          const wd=await w.json();
+          render(wd.current.temperature_2m, conditionFromCode(wd.current.weather_code), wd.current.relative_humidity_2m);
+          addActivity('Checked weather');
+        }catch{$('wOut').innerHTML='<span class="muted">Weather unavailable right now.</span>';}
+        $('wLoading').style.display='none';
+      };
+      $('wByCity').onclick=()=>run($('wCity').value||'Delhi');
+      $('wByLoc').onclick=()=>navigator.geolocation.getCurrentPosition(async pos=>{
+        $('wLoading').style.display='block';
+        try{
+          const w=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`);
+          const wd=await w.json();
+          render(wd.current.temperature_2m, conditionFromCode(wd.current.weather_code), wd.current.relative_humidity_2m);
+          addActivity('Checked weather by location');
+        }catch{$('wOut').innerHTML='<span class="muted">Location weather unavailable.</span>';}
+        $('wLoading').style.display='none';
+      },()=>run('Delhi'));
+    },
+    todo: () => {
+      const render=()=>{$('todoList').innerHTML=todos.map((t,i)=>`<div class="todo-item ${t.done?'done':''}"><span>${t.text}</span><div class="row"><button class="btn" data-done="${i}">${t.done?'Undo':'Done'}</button><button class="btn" data-del="${i}">Delete</button></div></div>`).join('');store.set('todos',todos);};
+      $('todoAdd').onclick=()=>{const v=$('todoInput').value.trim();if(!v)return;todos.unshift({text:v,done:false});$('todoInput').value='';render();addActivity('Added todo');};
+      $('todoList').onclick=(e)=>{const d=e.target.dataset.done,del=e.target.dataset.del;if(d!==undefined){todos[d].done=!todos[d].done;addActivity('Updated todo');}if(del!==undefined){todos.splice(del,1);addActivity('Deleted todo');}render();};
+      render();
+    },
+    gst: () => {
+      const calc=(remove=false)=>{
+        const amount=Number($('gstAmount').value||0), rate=Number($('gstRate').value||0);
+        if(amount<=0||rate<0){$('gstOut').textContent='Enter valid amount and GST rate.';return;}
+        if(!remove){const gst=(amount*rate)/100,total=amount+gst;$('gstOut').innerHTML=`Base: ₹${amount.toFixed(2)}<br>GST (${rate}%): ₹${gst.toFixed(2)}<br>Total: ₹${total.toFixed(2)}`;}
+        else {const base=amount/(1+rate/100),gst=amount-base;$('gstOut').innerHTML=`Inclusive Amount: ₹${amount.toFixed(2)}<br>Base: ₹${base.toFixed(2)}<br>GST (${rate}%): ₹${gst.toFixed(2)}`;}
+        addActivity('Calculated GST');
+      };
+      $('gstAdd').onclick=()=>calc(false);
+      $('gstRemove').onclick=()=>calc(true);
+    },
+    emi: () => {
+      $('emiCalc').onclick=()=>{
+        const P=Number($('emiLoan').value||0), annual=Number($('emiRate').value||0), t=Number($('emiTime').value||0), unit=$('emiUnit').value;
+        const n = unit==='years' ? t*12 : t;
+        if(P<=0||annual<0||n<=0){$('emiOut').textContent='Enter valid loan, interest, and duration.';return;}
+        const r = annual/(12*100);
+        const emi = r===0 ? P/n : (P*r*Math.pow(1+r,n))/(Math.pow(1+r,n)-1);
+        const total = emi*n, interest = total-P;
+        $('emiOut').innerHTML = `Monthly EMI: ₹${emi.toFixed(2)}<br>Total Payable: ₹${total.toFixed(2)}<br>Total Interest: ₹${interest.toFixed(2)}`;
+        addActivity('Calculated EMI');
+      };
+    }
+  };
+
+  // Smart search + voice commands
+  const routeSmart = (qRaw) => {
+    const q=qRaw.trim().toLowerCase();
+    if(!q) return;
+    if(/open\s+calculator/.test(q)) return openTool('calculator');
+    if(/open\s+currency|convert\s+\d*\s*[a-z]{3}\s+to\s+[a-z]{3}/.test(q)) return openTool('currency');
+    if(/open\s+translator|in\s+hindi|in\s+english/.test(q)) return openTool('translator');
+    if(/open\s+weather|weather\s+/.test(q)) {
+      openTool('weather');
+      const wm = q.match(/weather\s+(.+)/);
+      if (wm) setTimeout(()=>{ if($('wCity')){$('wCity').value=wm[1]; $('wByCity').click();}}, 80);
+      return;
+    }
+    const emiCmd = q.match(/^emi\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)$/);
+    if (emiCmd) {
+      openTool('emi');
+      setTimeout(()=>{ if($('emiLoan')){$('emiLoan').value=emiCmd[1]; $('emiRate').value=emiCmd[2]; $('emiTime').value=emiCmd[3]; $('emiUnit').value='years'; $('emiCalc').click();}}, 90);
+      return;
+    }
+    const gstCmd = q.match(/^gst\s+([\d.]+)\s+([\d.]+)%?$/);
+    if (gstCmd) {
+      openTool('gst');
+      setTimeout(()=>{ if($('gstAmount')){$('gstAmount').value=gstCmd[1]; $('gstRate').value=gstCmd[2]; $('gstAdd').click();}}, 90);
+      return;
+    }
+    const calcCmd = q.match(/^calc\s+(.+)$/);
+    if (calcCmd) {
+      openTool('calculator');
+      setTimeout(()=>{ if($('calcDisplay'))$('calcDisplay').textContent=calcCmd[1]; }, 60);
+      return;
+    }
+    if(/^calculate\s+/.test(q)) {
+      const expr = q.replace(/^calculate\s+/, '');
+      openTool('calculator');
+      setTimeout(()=>{if($('calcDisplay')) $('calcDisplay').textContent = expr;}, 60);
+      if (/^[0-9\s+\-*/().%]+$/.test(expr)) {
+        setTimeout(()=>{try{const r=Function(`\"use strict\";return (${expr})`)();if($('calcDisplay'))$('calcDisplay').textContent=r;}catch{}},90);
+      }
+      return;
+    }
+
+    if(/^[0-9\s+\-*/().%]+$/.test(q)){
+      openTool('calculator');
+      setTimeout(()=>{try{const r=Function(`"use strict";return (${q})`)();if($('calcDisplay'))$('calcDisplay').textContent=r;}catch{}},60);
+      return;
+    }
+    const cm=q.match(/([\d.]+)\s*([a-z]{3})\s+to\s+([a-z]{3})/i);
+    if(cm){openTool('currency');setTimeout(()=>{if($('curAmount')){$('curAmount').value=cm[1];$('curFrom').value=cm[2].toUpperCase();$('curTo').value=cm[3].toUpperCase();$('curAmount').dispatchEvent(new Event('input'));}},80);return;}
+    const tm=q.match(/(.+)\s+in\s+hindi|(.+)\s+in\s+english/i);
+    if(tm){const text=(tm[1]||tm[2]||'').trim();const toHindi=/in hindi/.test(q);openTool('translator');setTimeout(()=>{if($('trIn')){$('trFrom').value=toHindi?'en':'hi';$('trTo').value=toHindi?'hi':'en';$('trIn').value=text;$('trIn').dispatchEvent(new Event('input'));}},80);}
+  };
+
+  $('smartSearch').addEventListener('input', debounce(e=>routeSmart(e.target.value), 320));
+
+  let recognition = null;
+  let listening = false;
+  const setListening = (v) => {
+    listening = v;
+    $('voiceBtn').classList.toggle('listening', v);
+    $('voiceBtn').textContent = v ? 'Listening...' : 'Voice';
+  };
+  $('voiceBtn').onclick = async () => {
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR) return alert('Speech API not supported in this browser.');
+    if (listening && recognition) { recognition.stop(); setListening(false); return; }
+    recognition = new SR();
+    recognition.lang='en-IN';
+    recognition.interimResults=false;
+    recognition.maxAlternatives=1;
+    recognition.continuous=false;
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onresult=(ev)=>{
+      const raw = (ev.results?.[0]?.[0]?.transcript || '').trim();
+      const normalized = raw
+        .toLowerCase()
+        .replace(/plus/g,'+')
+        .replace(/minus/g,'-')
+        .replace(/into|times|multiplied by/g,'*')
+        .replace(/divided by|by/g,'/');
+      const cmd = normalized.startsWith('calculate ') ? normalized.replace('calculate ','') : normalized;
+      $('smartSearch').value = cmd || raw;
+      routeSmart(cmd || raw);
+      addActivity(`Voice command: ${raw}`);
+    };
+    recognition.onerror = (e) => {
+      const map = { 'no-speech':'No speech detected. Try again.', 'not-allowed':'Microphone permission denied.', 'audio-capture':'No microphone found.' };
+      alert(map[e.error] || `Voice error: ${e.error}`);
+      setListening(false);
+    };
+    try { recognition.start(); } catch { setListening(false); }
+  };
+
+  // Shared nav
+  document.querySelectorAll('[data-jump]').forEach(btn=>btn.onclick=()=>document.getElementById(btn.dataset.jump)?.scrollIntoView({behavior:'smooth'}));
+
+  // Offline banner
+  const updateOfflineBanner = () => {
+    $('offlineBanner').style.display = navigator.onLine ? 'none' : 'block';
+  };
+  window.addEventListener('online', updateOfflineBanner);
+  window.addEventListener('offline', updateOfflineBanner);
+  updateOfflineBanner();
+
+  // Install app prompt
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('installBtn').style.display = 'inline-flex';
+  });
+  $('installBtn').onclick = async () => {
+    if (!deferredPrompt) return;
+    $('installBtn').classList.add('install-pop');
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    $('installBtn').style.display = 'none';
+    setTimeout(() => $('installBtn').classList.remove('install-pop'), 360);
+  };
+
+  // PWA service worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+
+  renderActivity();
+  renderFavorites();
+})();
+</script>
+</body>
+</html>
