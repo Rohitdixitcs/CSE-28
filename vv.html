@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMPLOYEE SALARY MANAGEMENT SYSTEM</title>
+    <link rel="stylesheet" href = "hgf.css">
+</head>
+<body>
+    <div class="container">
+        <h1>EMPLOYEE SALARY MANAGEMENT SYSTEM</h1>
+        <input type="text" id="name" placeholder="EMPLOYEE NAME"> <br><br>
+         <input type="text" id="empId" placeholder="EMPLOYEE ID"><br><br>
+          <input type="number" id="salary" placeholder="SALARY"><br><br>
+           <input type="text" id="dept" placeholder="DEPARTMENT"><br><br>
+        <button onclick="addEmployee()">Add Employee</button>
+         <button onclick="displayEmployee()">Display All</button>
+          <button onclick="fliterSalary()">Salary > 500000</button>
+           <button onclick="totalSalary()">Total Salary</button>
+            <button onclick="averageSalary()">Average salary</button>
+             <button onclick="countDepartment()">Count by Department</button>
+<div id ="output"></div>
+    </div>
+    <script src="hgf.js"></script>
+</body>
+</html>

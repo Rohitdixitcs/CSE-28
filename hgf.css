@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<style>
+body{
+    font-family: Arial;
+    background-color:#625c5c;
+    text-align:center;
+}
+
+.container{
+    background:rgb(131, 126, 126);
+    width:400px;
+    margin:auto;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px gray;
+}
+
+input,button{
+    padding:8px;
+    margin:8px;
+}
+
+button{
+    background-color:green;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+#result{
+    margin-top:20px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+
+<body>
+    <div>
+        <h1>Empolyment Salary Management System</h1>
+       <input type="text" placeholder="Username">
+       <input type="number" placeholder="Employee ID">
+       <input type="number" placeholder="Salary">
+       <input type="text" placeholder="Department">
+       <button onclick="addEmpolyee()">Add Employee</button>
+        <button onclick="addEmpolyee()">Add Employee</button>
+        <button onclick="addEmpolyee()">Add Employee</button>
+         <button onclick="addEmpolyee()">Add Employee</button>
+        <button onclick="addEmpolyee()">Add Employee</button>
+         <button onclick="addEmpolyee()">Add Employee</button>
+
+
+
+
+      <div id="output"></div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Factorial Program</title>
+    <style>
+        body {
+            text-align: center;
+            margin-top: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Factorial of a Number</h2>
+
+    <input type="number" id="num" placeholder="Enter Number">
+    <button onclick="fact()">Find Factorial</button>
+
+    <p id="ans"></p>
+
+    <script>
+        function fact() {
+            let n = document.getElementById("num").value;
+            let f = 1;
+
+            if (n < 0) {
+                document.getElementById("ans").innerHTML =
+                    "Factorial not possible for negative numbers";
+                return;
+            }
+
+            for (let i = 1; i <= n; i++) {
+                f = f * i;
+            }
+
+            document.getElementById("ans").innerHTML =
+                "Factorial = " + f;
+        }
+    </script>
+</body>
+</html>
